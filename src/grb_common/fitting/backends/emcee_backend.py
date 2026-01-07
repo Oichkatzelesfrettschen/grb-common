@@ -17,8 +17,9 @@ Usage:
     result = sampler.run(n_steps=5000, n_burn=1000)
 """
 
-from typing import Callable, Optional, List, Union
 import time
+from typing import Any, Callable, List, Optional, cast
+
 import numpy as np
 
 from ..result import SamplerResult
@@ -53,8 +54,8 @@ class EmceeSampler:
         n_params: int,
         n_walkers: Optional[int] = None,
         param_names: Optional[List[str]] = None,
-        moves: Optional = None,
-        pool: Optional = None,
+        moves: Optional[Any] = None,
+        pool: Optional[Any] = None,
     ):
         import emcee
 
@@ -128,8 +129,8 @@ class EmceeSampler:
         runtime = time.time() - start_time
 
         # Extract chains
-        samples = self.sampler.get_chain(discard=n_burn, thin=thin, flat=True)
-        log_prob = self.sampler.get_log_prob(discard=n_burn, thin=thin, flat=True)
+        samples = cast(np.ndarray, self.sampler.get_chain(discard=n_burn, thin=thin, flat=True))
+        log_prob = cast(np.ndarray, self.sampler.get_log_prob(discard=n_burn, thin=thin, flat=True))
 
         # Package result
         return SamplerResult(
@@ -154,12 +155,12 @@ class EmceeSampler:
     @property
     def chain(self) -> np.ndarray:
         """Get the chain (n_steps, n_walkers, n_params)."""
-        return self.sampler.get_chain()
+        return cast(np.ndarray, self.sampler.get_chain())
 
     @property
     def acceptance_fraction(self) -> np.ndarray:
         """Get acceptance fraction for each walker."""
-        return self.sampler.acceptance_fraction
+        return cast(np.ndarray, self.sampler.acceptance_fraction)
 
     def get_autocorr_time(self, **kwargs) -> np.ndarray:
         """
@@ -171,12 +172,12 @@ class EmceeSampler:
             Autocorrelation time for each parameter.
         """
         try:
-            return self.sampler.get_autocorr_time(**kwargs)
+            return cast(np.ndarray, self.sampler.get_autocorr_time(**kwargs))
         except Exception as e:
             # emcee raises errors if chain too short
             import warnings
             warnings.warn(f"Could not compute autocorr time: {e}")
-            return np.full(self.n_params, np.nan)
+            return cast(np.ndarray, np.full(self.n_params, np.nan))
 
 
 __all__ = ["EmceeSampler"]

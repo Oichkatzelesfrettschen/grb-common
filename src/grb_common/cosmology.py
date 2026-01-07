@@ -26,11 +26,11 @@ Usage:
     dL = luminosity_distance(z)  # Returns distance in cm
 """
 
-from typing import Optional, Union
+from typing import Any, Optional, Union, cast
 
 import numpy as np
 from astropy import units as u
-from astropy.cosmology import Planck18, Planck15, WMAP9, FlatLambdaCDM
+from astropy.cosmology import WMAP9, FlatLambdaCDM, Planck15, Planck18
 
 # Type alias for array-like inputs
 ArrayLike = Union[float, np.ndarray]
@@ -44,6 +44,13 @@ COSMOLOGIES = {
 
 # Default cosmology
 DEFAULT_COSMOLOGY = "Planck18"
+
+
+def _as_arraylike(value: Any) -> ArrayLike:
+    arr = cast(np.ndarray, np.asarray(value, dtype=float))
+    if arr.shape == ():
+        return float(arr)
+    return arr
 
 
 def get_cosmology(
@@ -107,7 +114,7 @@ def luminosity_distance(
         Luminosity distance in cm.
     """
     cosmo = get_cosmology(cosmology, **kwargs)
-    return cosmo.luminosity_distance(z).to(u.cm).value
+    return _as_arraylike(cosmo.luminosity_distance(z).to(u.cm).value)
 
 
 def angular_diameter_distance(
@@ -133,7 +140,7 @@ def angular_diameter_distance(
         Angular diameter distance in cm.
     """
     cosmo = get_cosmology(cosmology, **kwargs)
-    return cosmo.angular_diameter_distance(z).to(u.cm).value
+    return _as_arraylike(cosmo.angular_diameter_distance(z).to(u.cm).value)
 
 
 def comoving_distance(
@@ -159,7 +166,7 @@ def comoving_distance(
         Comoving distance in cm.
     """
     cosmo = get_cosmology(cosmology, **kwargs)
-    return cosmo.comoving_distance(z).to(u.cm).value
+    return _as_arraylike(cosmo.comoving_distance(z).to(u.cm).value)
 
 
 def lookback_time(
@@ -185,7 +192,7 @@ def lookback_time(
         Lookback time in seconds.
     """
     cosmo = get_cosmology(cosmology, **kwargs)
-    return cosmo.lookback_time(z).to(u.s).value
+    return _as_arraylike(cosmo.lookback_time(z).to(u.s).value)
 
 
 def age_at_redshift(
@@ -211,7 +218,7 @@ def age_at_redshift(
         Age of universe in seconds.
     """
     cosmo = get_cosmology(cosmology, **kwargs)
-    return cosmo.age(z).to(u.s).value
+    return _as_arraylike(cosmo.age(z).to(u.s).value)
 
 
 def hubble_parameter(
@@ -237,7 +244,7 @@ def hubble_parameter(
         Hubble parameter in km/s/Mpc.
     """
     cosmo = get_cosmology(cosmology, **kwargs)
-    return cosmo.H(z).value
+    return _as_arraylike(cosmo.H(z).value)
 
 
 __all__ = [

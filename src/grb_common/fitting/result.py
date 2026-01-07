@@ -20,9 +20,11 @@ Usage:
     result = SamplerResult.load('chains.h5')
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Union, List, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union, cast, overload
+
 import numpy as np
 
 
@@ -70,12 +72,12 @@ class SamplerResult:
     @property
     def n_samples(self) -> int:
         """Number of samples."""
-        return self.samples.shape[0]
+        return int(self.samples.shape[0])
 
     @property
     def n_params(self) -> int:
         """Number of parameters."""
-        return self.samples.shape[1]
+        return int(self.samples.shape[1])
 
     def _get_param_index(self, param: Union[str, int]) -> int:
         """Get parameter index from name or index."""
@@ -88,10 +90,16 @@ class SamplerResult:
         idx = self._get_param_index(param)
         return self.samples[:, idx]
 
+    @overload
+    def percentile(self, param: Union[str, int], q: float) -> float: ...
+
+    @overload
+    def percentile(self, param: Union[str, int], q: Sequence[float]) -> np.ndarray: ...
+
     def percentile(
         self,
         param: Union[str, int],
-        q: Union[float, List[float]],
+        q: Union[float, Sequence[float]],
     ) -> Union[float, np.ndarray]:
         """
         Compute percentile(s) for a parameter.
@@ -109,9 +117,16 @@ class SamplerResult:
             Percentile value(s).
         """
         samples = self._get_param_samples(param)
+        if isinstance(q, (int, float)):
+            q_scalar = float(q)
+            if self.weights is not None:
+                return float(weighted_percentile(samples, q_scalar, self.weights))
+            return float(np.percentile(samples, q_scalar))
+
+        q_list = list(q)
         if self.weights is not None:
-            return weighted_percentile(samples, q, self.weights)
-        return np.percentile(samples, q)
+            return cast(np.ndarray, weighted_percentile(samples, q_list, self.weights))
+        return cast(np.ndarray, np.percentile(samples, q_list))
 
     def median(self, param: Union[str, int]) -> float:
         """Compute median for a parameter."""
@@ -156,7 +171,7 @@ class SamplerResult:
         alpha = (1 - level) / 2
         q_lo = alpha * 100
         q_hi = (1 - alpha) * 100
-        lo, hi = self.percentile(param, [q_lo, q_hi])
+        lo, hi = cast(np.ndarray, self.percentile(param, [q_lo, q_hi]))
         return (float(lo), float(hi))
 
     def summary(self) -> str:
@@ -345,7 +360,7 @@ class SamplerResult:
 
 def weighted_percentile(
     data: np.ndarray,
-    percentiles: Union[float, List[float]],
+    percentiles: Union[float, Sequence[float]],
     weights: np.ndarray,
 ) -> Union[float, np.ndarray]:
     """
@@ -365,7 +380,7 @@ def weighted_percentile(
     float or ndarray
         Percentile value(s).
     """
-    percentiles = np.atleast_1d(percentiles) / 100.0
+    percentiles_arr = cast(np.ndarray, np.atleast_1d(percentiles)) / 100.0
 
     # Sort data and weights
     sort_idx = np.argsort(data)
@@ -377,9 +392,9 @@ def weighted_percentile(
     cumsum /= cumsum[-1]
 
     # Interpolate to find percentiles
-    result = np.interp(percentiles, cumsum, sorted_data)
+    result = cast(np.ndarray, np.interp(percentiles_arr, cumsum, sorted_data))
 
-    return result[0] if len(result) == 1 else result
+    return float(result[0]) if int(result.size) == 1 else result
 
 
 __all__ = [

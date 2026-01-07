@@ -27,7 +27,7 @@ Usage:
     flux_int = deredden(wavelengths, flux_obs, ebv=0.1, law='Fitzpatrick99')
 """
 
-from typing import Optional, Union
+from typing import Any, Optional, Union, cast
 
 import numpy as np
 
@@ -58,11 +58,11 @@ def _check_extinction_import():
     try:
         import extinction
         return extinction
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "The 'extinction' package is required for extinction calculations. "
             "Install it with: pip install grb-common[extinction]"
-        )
+        ) from err
 
 
 def ebv_to_av(ebv: float, rv: float = 3.1) -> float:
@@ -89,7 +89,7 @@ def extinction_curve(
     av: float = 1.0,
     rv: Optional[float] = None,
     law: str = "Fitzpatrick99",
-) -> ArrayLike:
+) -> np.ndarray:
     """
     Calculate extinction A(lambda) for given wavelengths.
 
@@ -116,19 +116,22 @@ def extinction_curve(
     if rv is None:
         rv = RV_DEFAULT.get(law, 3.1)
 
+    def _as_array(value: Any) -> np.ndarray:
+        return cast(np.ndarray, np.asarray(value, dtype=float))
+
     if law == "Fitzpatrick99":
-        return ext.fitzpatrick99(wavelengths, av, rv)
-    elif law == "Cardelli89":
-        return ext.ccm89(wavelengths, av, rv)
-    elif law == "Calzetti00":
-        return ext.calzetti00(wavelengths, av, rv)
-    elif law == "SMC":
-        return ext.fm07(wavelengths, av)  # Gordon et al. 2003 SMC bar
-    elif law == "LMC":
+        return _as_array(ext.fitzpatrick99(wavelengths, av, rv))
+    if law == "Cardelli89":
+        return _as_array(ext.ccm89(wavelengths, av, rv))
+    if law == "Calzetti00":
+        return _as_array(ext.calzetti00(wavelengths, av, rv))
+    if law == "SMC":
+        return _as_array(ext.fm07(wavelengths, av))  # Gordon et al. 2003 SMC bar
+    if law == "LMC":
         # LMC approximation using FM with modified parameters
-        return ext.fm07(wavelengths, av)
-    else:
-        raise ValueError(f"Unknown extinction law: {law}. Choose from {EXTINCTION_LAWS}")
+        return _as_array(ext.fm07(wavelengths, av))
+
+    raise ValueError(f"Unknown extinction law: {law}. Choose from {EXTINCTION_LAWS}")
 
 
 def deredden(
@@ -138,7 +141,7 @@ def deredden(
     av: Optional[float] = None,
     rv: Optional[float] = None,
     law: str = "Fitzpatrick99",
-) -> ArrayLike:
+) -> np.ndarray:
     """
     Deredden observed flux to get intrinsic flux.
 
@@ -171,6 +174,7 @@ def deredden(
         rv = RV_DEFAULT.get(law, 3.1)
 
     if av is None:
+        assert ebv is not None
         av = ebv_to_av(ebv, rv)
 
     a_lambda = extinction_curve(wavelengths, av, rv, law)
@@ -179,7 +183,7 @@ def deredden(
     # A = -2.5 * log10(F_obs / F_int)
     # F_int = F_obs * 10^(A/2.5)
     flux = np.atleast_1d(flux).astype(float)
-    return flux * 10 ** (a_lambda / 2.5)
+    return cast(np.ndarray, np.asarray(flux * 10 ** (a_lambda / 2.5), dtype=float))
 
 
 def redden(
@@ -189,7 +193,7 @@ def redden(
     av: Optional[float] = None,
     rv: Optional[float] = None,
     law: str = "Fitzpatrick99",
-) -> ArrayLike:
+) -> np.ndarray:
     """
     Apply extinction to intrinsic flux to get observed flux.
 
@@ -222,13 +226,14 @@ def redden(
         rv = RV_DEFAULT.get(law, 3.1)
 
     if av is None:
+        assert ebv is not None
         av = ebv_to_av(ebv, rv)
 
     a_lambda = extinction_curve(wavelengths, av, rv, law)
 
     # F_obs = F_int * 10^(-A/2.5)
     flux = np.atleast_1d(flux).astype(float)
-    return flux * 10 ** (-a_lambda / 2.5)
+    return cast(np.ndarray, np.asarray(flux * 10 ** (-a_lambda / 2.5), dtype=float))
 
 
 __all__ = [

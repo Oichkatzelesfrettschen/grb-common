@@ -13,10 +13,14 @@ Usage:
     fig.savefig("sed.pdf")
 """
 
-from typing import Optional, List, Union, Any, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Union
+
 import numpy as np
 
-from .style import get_band_color, get_color, get_marker, COLORBLIND_PALETTE
+from .style import get_color, get_marker
+
+if TYPE_CHECKING:
+    from grb_common.io.schemas import GRBObservation, Spectrum
 
 
 # Frequency/wavelength ranges for standard bands
@@ -62,7 +66,7 @@ def get_band_frequency(band: str) -> float:
     """
     if band in BAND_FREQUENCIES:
         low, high = BAND_FREQUENCIES[band]
-        return np.sqrt(low * high)  # Geometric mean
+        return float(np.sqrt(low * high))  # Geometric mean
 
     # Try to extract frequency from band name
     band_lower = band.lower()

@@ -21,10 +21,19 @@ Usage:
 """
 
 from abc import ABC, abstractmethod
-from typing import Union, Optional
+from typing import Any, Optional, Union, cast
+
 import numpy as np
 
 ArrayLike = Union[float, np.ndarray]
+
+def _as_ndarray(value: Any) -> np.ndarray:
+    return cast(np.ndarray, np.asarray(value, dtype=float))
+
+
+def _as_arraylike(value: Any) -> ArrayLike:
+    arr = _as_ndarray(value)
+    return float(arr) if arr.ndim == 0 else arr
 
 
 class Prior(ABC):
@@ -129,7 +138,7 @@ class UniformPrior(Prior):
     def sample(self, n: int = 1, rng: Optional[np.random.Generator] = None) -> np.ndarray:
         if rng is None:
             rng = np.random.default_rng()
-        return rng.uniform(self.low, self.high, size=n)
+        return _as_ndarray(rng.uniform(self.low, self.high, size=n))
 
     def log_prob(self, x: ArrayLike) -> ArrayLike:
         x = np.asarray(x)
@@ -182,8 +191,8 @@ class LogUniformPrior(Prior):
     def sample(self, n: int = 1, rng: Optional[np.random.Generator] = None) -> np.ndarray:
         if rng is None:
             rng = np.random.default_rng()
-        log_samples = rng.uniform(self._log_low, self._log_high, size=n)
-        return np.exp(log_samples)
+        log_samples = _as_ndarray(rng.uniform(self._log_low, self._log_high, size=n))
+        return _as_ndarray(np.exp(log_samples))
 
     def log_prob(self, x: ArrayLike) -> ArrayLike:
         x = np.asarray(x)
@@ -197,8 +206,9 @@ class LogUniformPrior(Prior):
         return float(result) if result.ndim == 0 else result
 
     def ppf(self, q: ArrayLike) -> ArrayLike:
-        log_val = self._log_low + q * self._log_range
-        return np.exp(log_val)
+        q_arr = _as_ndarray(q)
+        log_val = self._log_low + q_arr * self._log_range
+        return _as_arraylike(np.exp(log_val))
 
     def __repr__(self) -> str:
         return f"LogUniformPrior({self.low:.2e}, {self.high:.2e})"
@@ -232,15 +242,16 @@ class GaussianPrior(Prior):
     def sample(self, n: int = 1, rng: Optional[np.random.Generator] = None) -> np.ndarray:
         if rng is None:
             rng = np.random.default_rng()
-        return rng.normal(self.mu, self.sigma, size=n)
+        return _as_ndarray(rng.normal(self.mu, self.sigma, size=n))
 
     def log_prob(self, x: ArrayLike) -> ArrayLike:
-        x = np.asarray(x)
-        return self._log_norm - 0.5 * ((x - self.mu) / self.sigma) ** 2
+        x_arr = _as_ndarray(x)
+        return _as_arraylike(self._log_norm - 0.5 * ((x_arr - self.mu) / self.sigma) ** 2)
 
     def ppf(self, q: ArrayLike) -> ArrayLike:
         from scipy.special import erfinv
-        return self.mu + self.sigma * np.sqrt(2) * erfinv(2 * q - 1)
+        q_arr = _as_ndarray(q)
+        return _as_arraylike(self.mu + self.sigma * np.sqrt(2) * erfinv(2 * q_arr - 1))
 
     def __repr__(self) -> str:
         return f"GaussianPrior({self.mu}, {self.sigma})"
@@ -286,8 +297,8 @@ class TruncatedGaussianPrior(Prior):
         if rng is None:
             rng = np.random.default_rng()
         # Use inverse CDF sampling
-        u = rng.uniform(0, 1, size=n)
-        return self.ppf(u)
+        u = _as_ndarray(rng.uniform(0, 1, size=n))
+        return _as_ndarray(self.ppf(u))
 
     def log_prob(self, x: ArrayLike) -> ArrayLike:
         x = np.asarray(x)
@@ -301,8 +312,9 @@ class TruncatedGaussianPrior(Prior):
     def ppf(self, q: ArrayLike) -> ArrayLike:
         from scipy.special import erfinv
         # Transform uniform to truncated normal
-        q_scaled = self._phi_alpha + q * self._Z
-        return self.mu + self.sigma * np.sqrt(2) * erfinv(2 * q_scaled - 1)
+        q_arr = _as_ndarray(q)
+        q_scaled = self._phi_alpha + q_arr * self._Z
+        return _as_arraylike(self.mu + self.sigma * np.sqrt(2) * erfinv(2 * q_scaled - 1))
 
     def __repr__(self) -> str:
         return f"TruncatedGaussianPrior({self.mu}, {self.sigma}, [{self.low}, {self.high}])"
@@ -324,7 +336,7 @@ class DeltaPrior(Prior):
         self.value = float(value)
 
     def sample(self, n: int = 1, rng: Optional[np.random.Generator] = None) -> np.ndarray:
-        return np.full(n, self.value)
+        return _as_ndarray(np.full(n, self.value))
 
     def log_prob(self, x: ArrayLike) -> ArrayLike:
         x = np.asarray(x)
@@ -332,8 +344,8 @@ class DeltaPrior(Prior):
         return float(result) if result.ndim == 0 else result
 
     def ppf(self, q: ArrayLike) -> ArrayLike:
-        q = np.asarray(q)
-        return np.full_like(q, self.value)
+        q_arr = _as_ndarray(q)
+        return _as_arraylike(np.full_like(q_arr, self.value))
 
     def __repr__(self) -> str:
         return f"DeltaPrior({self.value})"
@@ -381,7 +393,7 @@ class CompositePrior:
             self.priors[name].sample(n, rng)
             for name in self.param_names
         ])
-        return samples
+        return cast(np.ndarray, samples)
 
     def log_prob(self, theta: np.ndarray) -> float:
         """
@@ -427,10 +439,7 @@ class CompositePrior:
             Samples from prior distribution.
         """
         u = np.atleast_1d(u)
-        return np.array([
-            self.priors[name].ppf(u[i])
-            for i, name in enumerate(self.param_names)
-        ])
+        return _as_ndarray([self.priors[name].ppf(u[i]) for i, name in enumerate(self.param_names)])
 
     def __repr__(self) -> str:
         prior_strs = [f"  {name}: {prior}" for name, prior in self.priors.items()]

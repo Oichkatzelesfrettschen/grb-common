@@ -55,28 +55,26 @@ Usage:
     result.corner_plot()
 """
 
-from .priors import (
-    Prior,
-    UniformPrior,
-    LogUniformPrior,
-    GaussianPrior,
-    TruncatedGaussianPrior,
-    DeltaPrior,
-    CompositePrior,
-)
-
 from .likelihood import (
     chi_squared,
-    reduced_chi_squared,
+    chi_squared_upper_limits,
+    chi_squared_with_systematics,
+    cstat,
     gaussian_likelihood,
     gaussian_likelihood_asymmetric,
-    chi_squared_upper_limits,
     gaussian_likelihood_upper_limits,
-    chi_squared_with_systematics,
     poisson_likelihood,
-    cstat,
+    reduced_chi_squared,
 )
-
+from .priors import (
+    CompositePrior,
+    DeltaPrior,
+    GaussianPrior,
+    LogUniformPrior,
+    Prior,
+    TruncatedGaussianPrior,
+    UniformPrior,
+)
 from .result import (
     SamplerResult,
     weighted_percentile,

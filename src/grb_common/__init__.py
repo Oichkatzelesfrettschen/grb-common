@@ -34,24 +34,9 @@ __author__ = "Deirikr Jaiusadastra Afrauthihinngreygaard"
 # Lazy imports to avoid loading heavy dependencies at import time
 def __getattr__(name):
     """Lazy import submodules."""
-    if name == "constants":
-        from grb_common import constants
-        return constants
-    elif name == "cosmology":
-        from grb_common import cosmology
-        return cosmology
-    elif name == "extinction":
-        from grb_common import extinction
-        return extinction
-    elif name == "io":
-        from grb_common import io
-        return io
-    elif name == "fitting":
-        from grb_common import fitting
-        return fitting
-    elif name == "plotting":
-        from grb_common import plotting
-        return plotting
+    import importlib
+    if name in {"constants", "cosmology", "extinction", "io", "fitting", "plotting"}:
+        return importlib.import_module(f"{__name__}.{name}")
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [

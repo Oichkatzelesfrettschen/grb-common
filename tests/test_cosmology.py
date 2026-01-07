@@ -1,13 +1,13 @@
 """Tests for grb_common.cosmology module."""
 
-import pytest
 import numpy as np
+import pytest
 
 
 def test_luminosity_distance_low_z():
     """Test luminosity distance at low redshift."""
-    from grb_common.cosmology import luminosity_distance
     from grb_common.constants import C_LIGHT, MPC
+    from grb_common.cosmology import luminosity_distance
 
     # At very low z, d_L ~ c*z/H0
     z = 0.01
@@ -20,8 +20,8 @@ def test_luminosity_distance_low_z():
 
 def test_luminosity_distance_grb170817():
     """Test luminosity distance for GRB 170817A."""
-    from grb_common.cosmology import luminosity_distance
     from grb_common.constants import MPC
+    from grb_common.cosmology import luminosity_distance
 
     z = 0.0098  # GRB 170817A redshift
     dL = luminosity_distance(z, cosmology="Planck18")
@@ -33,7 +33,7 @@ def test_luminosity_distance_grb170817():
 
 def test_angular_diameter_distance():
     """Test angular diameter distance relation."""
-    from grb_common.cosmology import luminosity_distance, angular_diameter_distance
+    from grb_common.cosmology import angular_diameter_distance, luminosity_distance
 
     z = 0.5
     dL = luminosity_distance(z)

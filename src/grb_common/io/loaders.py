@@ -14,17 +14,16 @@ Usage:
 """
 
 from pathlib import Path
-from typing import Optional, Literal, Union, List
-import re
+from typing import Literal, Optional, Union
+
 import numpy as np
 
-from .schemas import LightCurve, Spectrum, GRBMetadata, GRBObservation
-
+from .schemas import GRBMetadata, GRBObservation, LightCurve, Spectrum
 
 FileFormat = Literal["asgard", "boxfit", "fits", "csv", "hdf5", "auto"]
 
 
-def detect_format(filepath: Union[str, Path]) -> str:
+def detect_format(filepath: Union[str, Path]) -> FileFormat:
     """
     Detect file format from extension and content.
 
@@ -52,7 +51,7 @@ def detect_format(filepath: Union[str, Path]) -> str:
     # For text files, peek at content
     if suffix in (".txt", ".dat", ""):
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 first_lines = [f.readline() for _ in range(10)]
             content = "".join(first_lines)
 
@@ -374,7 +373,7 @@ def _parse_csv_lightcurve(
     Auto-detects column names if header present.
     """
     # Try to detect if header exists
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         first_line = f.readline().strip()
 
     has_header = not first_line[0].isdigit() and not first_line[0] == "-"

@@ -14,10 +14,18 @@ Usage:
     log_like = gaussian_likelihood(observed, model, error)
 """
 
-from typing import Union, Optional, Tuple
+from typing import Any, Union, cast
+
 import numpy as np
 
 ArrayLike = Union[float, np.ndarray]
+
+def _as_ndarray(value: Any) -> np.ndarray:
+    return cast(np.ndarray, np.asarray(value, dtype=float))
+
+
+def _as_bool_ndarray(value: Any) -> np.ndarray:
+    return cast(np.ndarray, np.asarray(value, dtype=bool))
 
 
 def chi_squared(
@@ -42,11 +50,11 @@ def chi_squared(
     float
         Chi-squared value.
     """
-    observed = np.asarray(observed)
-    model = np.asarray(model)
-    error = np.asarray(error)
+    observed_arr = _as_ndarray(observed)
+    model_arr = _as_ndarray(model)
+    error_arr = _as_ndarray(error)
 
-    return np.sum(((observed - model) / error) ** 2)
+    return float(np.sum(((observed_arr - model_arr) / error_arr) ** 2))
 
 
 def reduced_chi_squared(
@@ -75,7 +83,7 @@ def reduced_chi_squared(
         Reduced chi-squared (chi^2 / dof).
     """
     chi2 = chi_squared(observed, model, error)
-    dof = len(np.asarray(observed)) - n_params
+    dof = int(_as_ndarray(observed).size) - n_params
     if dof <= 0:
         raise ValueError(f"Degrees of freedom ({dof}) must be positive")
     return chi2 / dof
@@ -105,15 +113,15 @@ def gaussian_likelihood(
     float
         Log-likelihood value.
     """
-    observed = np.asarray(observed)
-    model = np.asarray(model)
-    error = np.asarray(error)
+    observed_arr = _as_ndarray(observed)
+    model_arr = _as_ndarray(model)
+    error_arr = _as_ndarray(error)
 
-    n = len(observed)
+    n = int(observed_arr.size)
 
     # log L = -0.5 * sum[(y - m)^2 / sigma^2] - sum[log(sigma)] - n/2 * log(2*pi)
-    chi2 = chi_squared(observed, model, error)
-    log_norm = -np.sum(np.log(error)) - 0.5 * n * np.log(2 * np.pi)
+    chi2 = chi_squared(observed_arr, model_arr, error_arr)
+    log_norm = -float(np.sum(np.log(error_arr))) - 0.5 * n * float(np.log(2 * np.pi))
 
     return -0.5 * chi2 + log_norm
 
@@ -145,16 +153,16 @@ def gaussian_likelihood_asymmetric(
     float
         Log-likelihood value.
     """
-    observed = np.asarray(observed)
-    model = np.asarray(model)
-    error_lo = np.asarray(error_lo)
-    error_hi = np.asarray(error_hi)
+    observed_arr = _as_ndarray(observed)
+    model_arr = _as_ndarray(model)
+    error_lo_arr = _as_ndarray(error_lo)
+    error_hi_arr = _as_ndarray(error_hi)
 
     # Select appropriate error based on residual sign
-    residual = observed - model
-    error = np.where(residual > 0, error_lo, error_hi)
+    residual = observed_arr - model_arr
+    error_arr = cast(np.ndarray, np.where(residual > 0, error_lo_arr, error_hi_arr))
 
-    return gaussian_likelihood(observed, model, error)
+    return gaussian_likelihood(observed_arr, model_arr, error_arr)
 
 
 def chi_squared_upper_limits(
@@ -188,26 +196,29 @@ def chi_squared_upper_limits(
     float
         Modified chi-squared value.
     """
-    observed = np.asarray(observed)
-    model = np.asarray(model)
-    error = np.asarray(error)
-    upper_limits = np.asarray(upper_limits, dtype=bool)
+    observed_arr = _as_ndarray(observed)
+    model_arr = _as_ndarray(model)
+    error_arr = _as_ndarray(error)
+    upper_limits_arr = _as_bool_ndarray(upper_limits)
 
     # Detections: standard chi-squared
-    det_mask = ~upper_limits
-    chi2_det = chi_squared(observed[det_mask], model[det_mask], error[det_mask])
+    det_mask = cast(np.ndarray, ~upper_limits_arr)
+    chi2_det = chi_squared(observed_arr[det_mask], model_arr[det_mask], error_arr[det_mask])
 
     # Upper limits: penalize if model > limit
-    ul_mask = upper_limits
+    ul_mask = upper_limits_arr
+    chi2_ul: float
     if np.any(ul_mask):
-        limits = observed[ul_mask]
-        model_ul = model[ul_mask]
+        limits = observed_arr[ul_mask]
+        model_ul = model_arr[ul_mask]
         # Upper limit "sigma" estimated from the limit value
         sigma_ul_values = limits / sigma_ul
 
         # One-sided: only penalize when model exceeds limit
         excess = model_ul - limits
-        chi2_ul = np.sum(np.where(excess > 0, (excess / sigma_ul_values) ** 2, 0))
+        chi2_ul = float(
+            np.sum(np.where(excess > 0, (excess / sigma_ul_values) ** 2, 0))
+        )
     else:
         chi2_ul = 0.0
 
@@ -242,38 +253,39 @@ def gaussian_likelihood_upper_limits(
     float
         Log-likelihood value.
     """
-    observed = np.asarray(observed)
-    model = np.asarray(model)
-    error = np.asarray(error)
-    upper_limits = np.asarray(upper_limits, dtype=bool)
+    observed_arr = _as_ndarray(observed)
+    model_arr = _as_ndarray(model)
+    error_arr = _as_ndarray(error)
+    upper_limits_arr = _as_bool_ndarray(upper_limits)
 
-    det_mask = ~upper_limits
+    det_mask = cast(np.ndarray, ~upper_limits_arr)
 
     # Detections contribute normal Gaussian likelihood
     log_like_det = gaussian_likelihood(
-        observed[det_mask], model[det_mask], error[det_mask]
+        observed_arr[det_mask], model_arr[det_mask], error_arr[det_mask]
     ) if np.any(det_mask) else 0.0
 
     # Upper limits: use CDF-based likelihood
     # P(data | model) = integral from 0 to limit of Gaussian
     # log P = log(CDF(limit | model, sigma))
-    ul_mask = upper_limits
+    ul_mask = upper_limits_arr
+    log_like_ul: float
     if np.any(ul_mask):
         from scipy.special import erf
 
-        limits = observed[ul_mask]
-        model_ul = model[ul_mask]
+        limits = observed_arr[ul_mask]
+        model_ul = model_arr[ul_mask]
         sigma_ul_values = limits / sigma_ul
 
         # CDF of upper limit: probability of observing <= limit given model
         # For model < limit, this is high (good)
         # For model > limit, this is low (bad)
         z = (limits - model_ul) / sigma_ul_values
-        cdf_values = 0.5 * (1 + erf(z / np.sqrt(2)))
+        cdf_values = cast(np.ndarray, 0.5 * (1 + erf(z / np.sqrt(2))))
 
         # Avoid log(0)
         cdf_values = np.clip(cdf_values, 1e-300, 1.0)
-        log_like_ul = np.sum(np.log(cdf_values))
+        log_like_ul = float(np.sum(np.log(cdf_values)))
     else:
         log_like_ul = 0.0
 
@@ -307,9 +319,9 @@ def chi_squared_with_systematics(
     float
         Chi-squared value.
     """
-    stat_error = np.asarray(stat_error)
-    sys_error = np.asarray(sys_error)
-    total_error = np.sqrt(stat_error**2 + sys_error**2)
+    stat_error_arr = _as_ndarray(stat_error)
+    sys_error_arr = _as_ndarray(sys_error)
+    total_error = cast(np.ndarray, np.sqrt(stat_error_arr**2 + sys_error_arr**2))
     return chi_squared(observed, model, total_error)
 
 
@@ -334,17 +346,19 @@ def poisson_likelihood(
     float
         Log-likelihood value.
     """
-    counts = np.asarray(counts)
-    model = np.asarray(model)
+    counts_arr = _as_ndarray(counts)
+    model_arr = _as_ndarray(model)
 
     # Ensure model is positive
-    model = np.maximum(model, 1e-300)
+    model_arr = cast(np.ndarray, np.maximum(model_arr, 1e-300))
 
     # log L = sum[k * log(lambda) - lambda - log(k!)]
     # Ignoring constant factorial term
     from scipy.special import gammaln
 
-    log_like = np.sum(counts * np.log(model) - model - gammaln(counts + 1))
+    log_like = float(
+        np.sum(counts_arr * np.log(model_arr) - model_arr - gammaln(counts_arr + 1))
+    )
 
     return log_like
 
@@ -371,15 +385,20 @@ def cstat(
     float
         C-statistic value (lower is better, like chi-squared).
     """
-    counts = np.asarray(counts)
-    model = np.asarray(model)
+    counts_arr = _as_ndarray(counts)
+    model_arr = _as_ndarray(model)
 
-    model = np.maximum(model, 1e-300)
+    model_arr = cast(np.ndarray, np.maximum(model_arr, 1e-300))
 
     # C = 2 * sum[m - n + n*log(n/m)]
     # For n=0: contribution is just 2*m
-    result = 2 * np.sum(
-        model - counts + np.where(counts > 0, counts * np.log(counts / model), 0)
+    result = float(
+        2
+        * np.sum(
+            model_arr
+            - counts_arr
+            + np.where(counts_arr > 0, counts_arr * np.log(counts_arr / model_arr), 0)
+        )
     )
 
     return result

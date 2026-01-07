@@ -13,10 +13,14 @@ Usage:
     fig.savefig("corner.pdf")
 """
 
-from typing import Optional, List, Dict, Any, Union, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
+
 import numpy as np
 
-from .style import format_parameter_name, COLORBLIND_PALETTE
+from .style import COLORBLIND_PALETTE, format_parameter_name
+
+if TYPE_CHECKING:
+    from grb_common.fitting.result import SamplerResult
 
 
 def corner_plot(
@@ -24,7 +28,7 @@ def corner_plot(
     params: Optional[List[str]] = None,
     truths: Optional[Dict[str, float]] = None,
     labels: Optional[List[str]] = None,
-    quantiles: List[float] = [0.16, 0.5, 0.84],
+    quantiles: Optional[List[float]] = None,
     show_titles: bool = True,
     title_fmt: str = ".2e",
     color: Optional[str] = None,
@@ -62,6 +66,8 @@ def corner_plot(
     matplotlib.figure.Figure
         The corner plot figure.
     """
+    if quantiles is None:
+        quantiles = [0.16, 0.5, 0.84]
     try:
         import corner
     except ImportError:
@@ -202,6 +208,7 @@ def corner_comparison(
             corner.corner(samples, fig=fig, **corner_kwargs)
 
     # Add legend
+    assert fig is not None
     axes = fig.get_axes()
     lines = [plt.Line2D([0], [0], color=c, linewidth=2) for c in colors[:len(results)]]
     axes[0].legend(lines, names, loc="upper right")
@@ -215,7 +222,7 @@ def corner_1d(
     ncols: int = 4,
     figsize: Optional[Tuple[float, float]] = None,
     show_quantiles: bool = True,
-    quantiles: List[float] = [0.16, 0.5, 0.84],
+    quantiles: Optional[List[float]] = None,
     **kwargs,
 ) -> Any:
     """
@@ -243,6 +250,8 @@ def corner_1d(
     matplotlib.figure.Figure
         The figure with 1D histograms.
     """
+    if quantiles is None:
+        quantiles = [0.16, 0.5, 0.84]
     try:
         import matplotlib.pyplot as plt
     except ImportError:
@@ -287,17 +296,23 @@ def corner_1d(
         if show_quantiles:
             if weights is not None:
                 from ..fitting.result import weighted_percentile
-                q_values = weighted_percentile(samples, weights, np.array(quantiles) * 100)
+
+                q_values = cast(
+                    np.ndarray,
+                    weighted_percentile(samples, np.array(quantiles) * 100, weights),
+                )
             else:
-                q_values = np.percentile(samples, np.array(quantiles) * 100)
+                q_values = cast(
+                    np.ndarray, np.percentile(samples, np.array(quantiles) * 100)
+                )
 
             for q_val in q_values:
-                ax.axvline(q_val, color="black", linestyle="--", alpha=0.7)
+                ax.axvline(float(q_val), color="black", linestyle="--", alpha=0.7)
 
             # Title with median and uncertainty
-            med = q_values[1]
-            lower = med - q_values[0]
-            upper = q_values[2] - med
+            med = float(q_values[1])
+            lower = med - float(q_values[0])
+            upper = float(q_values[2]) - med
 
             ax.set_title(f"{med:.2e}$^{{+{upper:.2e}}}_{{-{lower:.2e}}}$", fontsize=9)
 

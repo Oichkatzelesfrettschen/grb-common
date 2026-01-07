@@ -44,37 +44,34 @@ Usage:
     fig.savefig("lightcurve.pdf")
 """
 
+from .corner import (
+    corner_1d,
+    corner_comparison,
+    corner_plot,
+    trace_plot,
+)
+from .lightcurves import (
+    plot_lightcurve,
+    plot_lightcurve_comparison,
+    plot_multiband,
+    plot_with_model,
+)
+from .spectra import (
+    BAND_FREQUENCIES,
+    get_band_frequency,
+    plot_broadband_sed,
+    plot_sed,
+    plot_sed_evolution,
+)
 from .style import (
     COLORBLIND_PALETTE,
     GRB_BAND_COLORS,
     STYLES,
-    set_style,
-    get_color,
-    get_band_color,
-    get_marker,
     format_parameter_name,
-)
-
-from .lightcurves import (
-    plot_lightcurve,
-    plot_multiband,
-    plot_with_model,
-    plot_lightcurve_comparison,
-)
-
-from .spectra import (
-    BAND_FREQUENCIES,
-    get_band_frequency,
-    plot_sed,
-    plot_sed_evolution,
-    plot_broadband_sed,
-)
-
-from .corner import (
-    corner_plot,
-    corner_comparison,
-    corner_1d,
-    trace_plot,
+    get_band_color,
+    get_color,
+    get_marker,
+    set_style,
 )
 
 __all__ = [

@@ -1,7 +1,7 @@
 """Tests for grb_common.plotting module."""
 
-import pytest
 import numpy as np
+import pytest
 
 
 class TestStyle:
@@ -16,7 +16,7 @@ class TestStyle:
 
     def test_get_color_wraps(self):
         """Test get_color wraps around palette."""
-        from grb_common.plotting import get_color, COLORBLIND_PALETTE
+        from grb_common.plotting import COLORBLIND_PALETTE, get_color
 
         assert get_color(0) == COLORBLIND_PALETTE[0]
         assert get_color(8) == COLORBLIND_PALETTE[0]  # Wraps
@@ -24,14 +24,14 @@ class TestStyle:
 
     def test_get_band_color_known(self):
         """Test get_band_color for known bands."""
-        from grb_common.plotting import get_band_color, GRB_BAND_COLORS
+        from grb_common.plotting import GRB_BAND_COLORS, get_band_color
 
         assert get_band_color("X-ray") == GRB_BAND_COLORS["X-ray"]
         assert get_band_color("radio") == GRB_BAND_COLORS["radio"]
 
     def test_get_band_color_partial_match(self):
         """Test get_band_color partial matching."""
-        from grb_common.plotting import get_band_color, GRB_BAND_COLORS
+        from grb_common.plotting import GRB_BAND_COLORS, get_band_color
 
         assert get_band_color("X-ray band") == GRB_BAND_COLORS["X-ray"]
         assert get_band_color("radio_custom") == GRB_BAND_COLORS["radio"]
@@ -47,8 +47,9 @@ class TestStyle:
     def test_set_style_default(self):
         """Test setting default style."""
         pytest.importorskip("matplotlib")
-        from grb_common.plotting import set_style, STYLES
         import matplotlib.pyplot as plt
+
+        from grb_common.plotting import STYLES, set_style
 
         set_style("default")
         # Check some style parameters were applied
@@ -57,8 +58,9 @@ class TestStyle:
     def test_set_style_apj(self):
         """Test setting ApJ style."""
         pytest.importorskip("matplotlib")
-        from grb_common.plotting import set_style, STYLES
         import matplotlib.pyplot as plt
+
+        from grb_common.plotting import STYLES, set_style
 
         set_style("apj")
         assert plt.rcParams["figure.dpi"] == STYLES["apj"]["figure.dpi"]

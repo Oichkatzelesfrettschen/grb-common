@@ -11,10 +11,9 @@ Usage:
 """
 
 from pathlib import Path
-from typing import Union, Optional
-import numpy as np
+from typing import Optional, Union
 
-from .schemas import LightCurve, Spectrum, GRBMetadata, GRBObservation
+from .schemas import GRBObservation, LightCurve, Spectrum
 
 
 def save_lightcurve(
@@ -64,7 +63,7 @@ def save_lightcurve(
         band_grp = grp.create_group(lc.band)
 
         # Store arrays
-        kwargs = {}
+        kwargs: dict[str, object] = {}
         if compression:
             kwargs["compression"] = compression
             kwargs["compression_opts"] = compression_opts
@@ -144,7 +143,7 @@ def save_spectrum(
 
         spec_grp = grp.create_group(name)
 
-        kwargs = {}
+        kwargs: dict[str, object] = {}
         if compression:
             kwargs["compression"] = compression
             kwargs["compression_opts"] = compression_opts

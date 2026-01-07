@@ -16,8 +16,8 @@ Usage:
     sampler = EmceeSampler(log_prob, n_walkers=32, ...)
 """
 
-from typing import Callable, Dict, Any, Optional, List
 import warnings
+from typing import Any, Callable, Dict, List, Optional
 
 # Track available backends
 _AVAILABLE_BACKENDS: Dict[str, bool] = {}

@@ -11,7 +11,7 @@ This example demonstrates:
 import numpy as np
 
 from grb_common.io import LightCurve, GRBMetadata, GRBObservation
-from grb_common.extinction import deredden_flux
+from grb_common.extinction import deredden
 from grb_common.cosmology import luminosity_distance
 from grb_common.constants import MPC
 
@@ -85,12 +85,7 @@ def main():
 
     # Correct optical R-band (effective wavelength ~6400 Angstrom)
     wavelength_R = 6400.0  # Angstrom
-    optical_flux_corrected = deredden_flux(
-        optical_lc.flux,
-        wavelength_R,
-        E_BV=E_BV,
-        R_V=R_V,
-    )
+    optical_flux_corrected = deredden(wavelength_R, optical_lc.flux, ebv=E_BV, rv=R_V)
 
     print(f"\nOptical extinction correction:")
     print(f"  E(B-V) = {E_BV} mag")

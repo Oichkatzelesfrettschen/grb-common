@@ -17,9 +17,10 @@ Usage:
     result = sampler.run()
 """
 
-from typing import Callable, Optional, List
-from pathlib import Path
 import time
+from pathlib import Path
+from typing import Callable, List, Optional
+
 import numpy as np
 
 from ..result import SamplerResult

@@ -18,8 +18,7 @@ Usage:
     plt.plot(t, flux, color=get_color(0))
 """
 
-from typing import Dict, Any, Optional, Tuple, List
-import numpy as np
+from typing import Any, Dict
 
 # Wong (2011) colorblind-safe palette
 # https://www.nature.com/articles/nmeth.1618

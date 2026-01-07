@@ -1,9 +1,10 @@
 """Tests for grb_common.io module."""
 
-import pytest
-import numpy as np
 import tempfile
 from pathlib import Path
+
+import numpy as np
+import pytest
 
 
 class TestLightCurve:
@@ -79,7 +80,7 @@ class TestGRBObservation:
 
     def test_create_observation(self):
         """Test creating complete observation."""
-        from grb_common.io import LightCurve, GRBMetadata, GRBObservation
+        from grb_common.io import GRBMetadata, GRBObservation, LightCurve
 
         meta = GRBMetadata(name="GRB 170817A", redshift=0.0098)
 
@@ -108,7 +109,7 @@ class TestGRBObservation:
 
     def test_get_band(self):
         """Test retrieving specific band."""
-        from grb_common.io import LightCurve, GRBMetadata, GRBObservation
+        from grb_common.io import GRBMetadata, GRBObservation, LightCurve
 
         meta = GRBMetadata(name="Test")
         lc = LightCurve(
@@ -154,7 +155,7 @@ class TestHDF5RoundTrip:
     def test_lightcurve_roundtrip(self):
         """Test saving and loading light curve."""
         pytest.importorskip("h5py")
-        from grb_common.io import LightCurve, save_lightcurve, load_lightcurve
+        from grb_common.io import LightCurve, load_lightcurve, save_lightcurve
 
         time = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         flux = np.array([1e-26, 2e-26, 1.5e-26, 1.2e-26, 0.8e-26])
@@ -185,10 +186,7 @@ class TestHDF5RoundTrip:
     def test_grb_roundtrip(self):
         """Test saving and loading complete GRB observation."""
         pytest.importorskip("h5py")
-        from grb_common.io import (
-            LightCurve, GRBMetadata, GRBObservation,
-            save_grb, load_grb
-        )
+        from grb_common.io import GRBMetadata, GRBObservation, LightCurve, load_grb, save_grb
 
         meta = GRBMetadata(
             name="GRB 170817A",

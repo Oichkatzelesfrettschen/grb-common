@@ -14,10 +14,14 @@ Usage:
     fig.savefig("lightcurve.pdf")
 """
 
-from typing import Optional, List, Union, Tuple, Any
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+
 import numpy as np
 
 from .style import get_band_color, get_marker
+
+if TYPE_CHECKING:
+    from grb_common.io.schemas import GRBObservation, LightCurve
 
 
 def plot_lightcurve(

@@ -1,7 +1,7 @@
 """Tests for grb_common.constants module."""
 
-import pytest
 import numpy as np
+import pytest
 
 
 def test_speed_of_light():
@@ -34,7 +34,7 @@ def test_solar_mass():
 
 def test_parsec():
     """Test parsec value."""
-    from grb_common.constants import PC, MPC
+    from grb_common.constants import MPC, PC
     # 1 pc ~ 3.086e18 cm
     assert 3.08e18 < PC < 3.09e18
     # 1 Mpc = 1e6 pc
@@ -43,7 +43,7 @@ def test_parsec():
 
 def test_derived_quantities():
     """Test derived quantities are consistent."""
-    from grb_common.constants import M_ELECTRON, C_LIGHT, M_E_C2
+    from grb_common.constants import C_LIGHT, M_E_C2, M_ELECTRON
     # m_e * c^2 should equal M_E_C2
     calculated = M_ELECTRON * C_LIGHT**2
     assert np.isclose(calculated, M_E_C2, rtol=1e-10)

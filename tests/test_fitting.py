@@ -1,7 +1,7 @@
 """Tests for grb_common.fitting module."""
 
-import pytest
 import numpy as np
+import pytest
 
 
 class TestPriors:
@@ -103,9 +103,7 @@ class TestPriors:
 
     def test_composite_prior(self):
         """Test composite prior."""
-        from grb_common.fitting import (
-            UniformPrior, LogUniformPrior, CompositePrior
-        )
+        from grb_common.fitting import CompositePrior, LogUniformPrior, UniformPrior
 
         priors = CompositePrior({
             'a': UniformPrior(0, 1),
@@ -258,9 +256,10 @@ class TestSamplerResult:
     def test_result_save_load(self):
         """Test saving and loading results."""
         pytest.importorskip("h5py")
-        from grb_common.fitting import SamplerResult
         import tempfile
         from pathlib import Path
+
+        from grb_common.fitting import SamplerResult
 
         samples = np.random.randn(100, 2)
         log_like = np.random.randn(100)

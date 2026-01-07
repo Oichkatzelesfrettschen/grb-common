@@ -26,6 +26,7 @@ from astropy import units as u
 C_LIGHT: float = const.c.cgs.value  # cm/s
 C_LIGHT_CGS: float = C_LIGHT
 C_LIGHT_KMS: float = const.c.to(u.km / u.s).value
+C: float = C_LIGHT
 
 # Planck constant
 H_PLANCK: float = const.h.cgs.value  # erg s
@@ -101,6 +102,7 @@ DAY: float = (1 * u.day).to(u.s).value  # s
 HOUR: float = 3600.0  # s
 
 __all__ = [
+    "C",
     "C_LIGHT",
     "C_LIGHT_CGS",
     "C_LIGHT_KMS",

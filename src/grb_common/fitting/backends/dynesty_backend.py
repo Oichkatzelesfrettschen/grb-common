@@ -26,8 +26,9 @@ Usage:
     result = sampler.run()
 """
 
-from typing import Callable, Optional, List, Literal
 import time
+from typing import Any, Callable, List, Optional
+
 import numpy as np
 
 from ..result import SamplerResult
@@ -73,7 +74,7 @@ class DynestySampler:
         bound: str = "multi",
         sample: str = "auto",
         nlive: int = 500,
-        pool: Optional = None,
+        pool: Optional[Any] = None,
         **kwargs,
     ):
         import dynesty

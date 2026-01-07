@@ -42,25 +42,23 @@ Usage:
     save_lightcurve(lc, "output.h5")
 """
 
-from .schemas import (
-    LightCurvePoint,
-    LightCurve,
-    Spectrum,
-    GRBMetadata,
-    GRBObservation,
-)
-
 from .loaders import (
     detect_format,
+    load_grb,
     load_lightcurve,
     load_spectrum,
-    load_grb,
 )
-
+from .schemas import (
+    GRBMetadata,
+    GRBObservation,
+    LightCurve,
+    LightCurvePoint,
+    Spectrum,
+)
 from .writers import (
+    save_grb,
     save_lightcurve,
     save_spectrum,
-    save_grb,
 )
 
 __all__ = [
